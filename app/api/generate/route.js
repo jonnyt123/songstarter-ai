@@ -4,17 +4,21 @@ export async function POST(req) {
   try {
     const { theme, mood, perspective, context } = await req.json();
 
-    const client = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-
     if (!process.env.OPENAI_API_KEY) {
       throw new Error("Missing OPENAI_API_KEY");
     }
 
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
     const response = await client.chat.completions.create({
       model: "gpt-4.1-mini",
       messages: [
+        {
+          role: "system",
+          content: "You are a professional songwriter.",
+        },
         {
           role: "user",
           content: `
