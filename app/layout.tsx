@@ -1,13 +1,9 @@
 export const metadata = {
   title: "SongStarter AI",
-  description: "Generate structured song lyrics from your ideas",
+  description: "Generate song lyrics from your ideas",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>{children}</body>

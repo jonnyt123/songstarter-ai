@@ -7,7 +7,6 @@ export default function Home() {
   const [mood, setMood] = useState("");
   const [perspective, setPerspective] = useState("1st person");
   const [context, setContext] = useState("");
-
   const [result, setResult] = useState("");
   const [credits, setCredits] = useState(3);
   const [loading, setLoading] = useState(false);
@@ -20,7 +19,6 @@ export default function Home() {
 
   const useCredit = () => {
     if (credits <= 0) return false;
-
     const updated = credits - 1;
     setCredits(updated);
     localStorage.setItem("credits", String(updated));
@@ -30,32 +28,20 @@ export default function Home() {
   const generate = async () => {
     try {
       setLoading(true);
-
-      const res = await fetch(`${window.location.origin}/api/generate`, {
+      const res = await fetch("/api/generate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          theme,
-          mood,
-          perspective,
-          context
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ theme, mood, perspective, context }),
       });
-
       const data = await res.json();
-
       if (!res.ok || data.error) {
-        throw new Error(data.error || "Failed to generate");
+      throw new Error(data.error || "Failed to generate");
       }
-
       useCredit();
       setResult(data.lyrics);
-
-    } catch (err: any) {
-      console.error("FRONTEND ERROR:", err);
-      alert(err.message);
+    } catch (err) {
+      console.error(err);
+      alert("Error generating lyrics");
     } finally {
       setLoading(false);
     }
@@ -64,45 +50,15 @@ export default function Home() {
   return (
     <main style={{ padding: 40, maxWidth: 600, margin: "auto" }}>
       <h1>🎵 SongStarter AI</h1>
-      <p>Turn your ideas into structured lyrics</p>
-
       <p><strong>Credits:</strong> {credits}</p>
-
-      <input
-        placeholder="Theme"
-        value={theme}
-        onChange={(e) => setTheme(e.target.value)}
-        style={{ width: "100%", marginBottom: 10 }}
-      />
-
-      <input
-        placeholder="Mood"
-        value={mood}
-        onChange={(e) => setMood(e.target.value)}
-        style={{ width: "100%", marginBottom: 10 }}
-      />
-
-      <input
-        placeholder="Perspective"
-        value={perspective}
-        onChange={(e) => setPerspective(e.target.value)}
-        style={{ width: "100%", marginBottom: 10 }}
-      />
-
-      <textarea
-        placeholder="Context"
-        value={context}
-        onChange={(e) => setContext(e.target.value)}
-        style={{ width: "100%", marginBottom: 10 }}
-      />
-
+      <input placeholder="Theme" value={theme} onChange={e => setTheme(e.target.value)} />
+      <input placeholder="Mood" value={mood} onChange={e => setMood(e.target.value)} />
+      <input placeholder="Perspective" value={perspective} onChange={e => setPerspective(e.target.value)} />
+      <textarea placeholder="Context" value={context} onChange={e => setContext(e.target.value)} />
       <button onClick={generate} disabled={loading}>
-        {loading ? "Generating..." : "Generate Song"}
+        {loading ? "Generating..." : "Generate"}
       </button>
-
-      <pre style={{ marginTop: 20, whiteSpace: "pre-wrap" }}>
-        {result}
-      </pre>
+      <pre>{result}</pre>
     </main>
   );
 }
