@@ -1,77 +1,53 @@
 import OpenAI from "openai";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(req) {
-  const body = await req.json();
-  const { theme, mood, perspective, context } = body;
-
   try {
-    // Step 1: Blueprint
-    const blueprint = await client.chat.completions.create({
-      model: "gpt-4.1",
+    const { theme, mood, perspective, context } = await req.json();
+
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("Missing OPENAI_API_KEY");
+    }
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4.1-mini",
       messages: [
-        {
-          role: "system",
-          content: "You are a professional songwriter.",
-        },
         {
           role: "user",
           content: `
+Write song lyrics with:
+
+Verse 1 (8–10 lines)
+Chorus (4–6 lines, catchy)
+
 Theme: ${theme}
 Mood: ${mood}
 Perspective: ${perspective}
 Context: ${context}
 
-Generate:
-- Core message
-- Key moment
-- Emotional shift
-
-Be specific and avoid generic language.
+Avoid clichés. Use specific imagery.
           `,
         },
       ],
     });
 
-    const blueprintText = blueprint.choices[0].message.content;
+    const lyrics = response?.choices?.[0]?.message?.content;
 
-    // Step 2: Lyrics
-    const lyrics = await client.chat.completions.create({
-      model: "gpt-4.1",
-      messages: [
-        {
-          role: "system",
-          content: "You write high-quality, original song lyrics.",
-        },
-        {
-          role: "user",
-          content: `
-Write lyrics:
+    if (!lyrics) {
+      throw new Error("No lyrics generated");
+    }
 
-Verse 1:
-- Specific imagery
-- Natural flow
+    return Response.json({ lyrics });
 
-Chorus:
-- Catchy and repeatable
-
-Avoid clichés.
-
-Blueprint:
-${blueprintText}
-          `,
-        },
-      ],
-    });
-
-    return Response.json({
-      blueprint: blueprintText,
-      lyrics: lyrics.choices[0].message.content,
-    });
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    console.error("API ERROR:", err);
+
+    return Response.json(
+      { error: err.message || "Server error" },
+      { status: 500 }
+    );
   }
 }

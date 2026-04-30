@@ -13,46 +13,57 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const storedCredits = localStorage.getItem("credits");
-    if (storedCredits) {
-      setCredits(Number(storedCredits));
-    } else {
-      localStorage.setItem("credits", "3");
-    }
+    const stored = localStorage.getItem("credits");
+    if (stored) setCredits(Number(stored));
+    else localStorage.setItem("credits", "3");
   }, []);
 
   const useCredit = () => {
     if (credits <= 0) return false;
 
-    const newCredits = credits - 1;
-    setCredits(newCredits);
-    localStorage.setItem("credits", String(newCredits));
+    const updated = credits - 1;
+    setCredits(updated);
+    localStorage.setItem("credits", String(updated));
     return true;
   };
 
   const generate = async () => {
-    if (!useCredit()) {
-      alert("No credits left");
-      return;
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${window.location.origin}/api/generate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          theme,
+          mood,
+          perspective,
+          context
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to generate");
+      }
+
+      useCredit();
+      setResult(data.lyrics);
+
+    } catch (err: any) {
+      console.error("FRONTEND ERROR:", err);
+      alert(err.message);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(true);
-
-    const res = await fetch("/api/generate", {
-      method: "POST",
-      body: JSON.stringify({ theme, mood, perspective, context }),
-    });
-
-    const data = await res.json();
-    setResult(data.lyrics);
-    setLoading(false);
   };
 
   return (
     <main style={{ padding: 40, maxWidth: 600, margin: "auto" }}>
-      <h1 style={{ fontSize: "32px", fontWeight: "bold" }}>
-        🎵 SongStarter AI
-      </h1>
+      <h1>🎵 SongStarter AI</h1>
       <p>Turn your ideas into structured lyrics</p>
 
       <p><strong>Credits:</strong> {credits}</p>
